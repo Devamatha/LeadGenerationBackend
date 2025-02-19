@@ -31,5 +31,6 @@ public interface AddLeadService {
 			String bussinessType, String mailId, Long mobileNumber, String bussinessName) throws IOException;
     public List<Map<String, Object>> getLeadsCountPerDay(Long clientId, Integer month, Integer year) ;
 
+	public Page<AddLead> getLeadsByClientId(Long clientId, int page, int size) ;
 
 }

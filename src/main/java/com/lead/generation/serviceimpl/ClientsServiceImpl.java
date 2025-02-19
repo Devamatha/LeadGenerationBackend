@@ -2,22 +2,29 @@ package com.lead.generation.serviceimpl;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.lead.generation.entity.Clients;
 import com.lead.generation.repository.ClientsRepository;
 import com.lead.generation.service.ClientsService;
 
 @Service
+@Transactional
+
 public class ClientsServiceImpl implements ClientsService {
 
 	@Autowired
@@ -32,27 +39,19 @@ public class ClientsServiceImpl implements ClientsService {
 	private String fromMail;
 
 	@Override
-	public Clients registerEmployeeAndAdmin(String fullName, String email, Long mobileNumber, String role) {
+	public Clients registerAdmin(String fullName, String email, Long mobileNumber, String role, String password) {
 		try {
-			String password = generatePassword();
+			// String password = generatePassword();
 			BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 			Clients clients = new Clients();
 			clients.setFullName(fullName);
 			clients.setEmail(email);
 			clients.setMobileNumber(mobileNumber);
-			clients.setRole(role);
+			clients.setRole("ROLE_ADMIN");
 			System.out.println(password + "password");
 			clients.setPassword(bCryptPasswordEncoder.encode(password));
 			clients.setCreatedAt(LocalDateTime.now());
-			if (role.equals("ROLE_ADMIN")) {
-				clientsRepository.save(clients);
-
-			} else if (role.equals("ROLE_EMPLOYEE")) {
-				clientsRepository.save(clients);
-
-			} else {
-				throw new RuntimeException("please check role,  Role should be ROLE_ADMIN or ROLE_EMPLOYEE");
-			}
+			clientsRepository.save(clients);
 
 			return clients;
 		} catch (Exception e) {
@@ -125,4 +124,46 @@ public class ClientsServiceImpl implements ClientsService {
 		return lettersBuilder.toString() + digitsBuilder.toString();
 	}
 
+	@Override
+	public Clients registerEmployee(String fullName, String email, Long mobileNumber, String role, String password,
+			long adminId, MultipartFile image) {
+		try {
+			Clients admin = clientsRepository.findById(adminId)
+					.orElseThrow(() -> new RuntimeException(adminId + " admin is not found"));
+			Clients clients = new Clients();
+
+			if (admin.getRole().equals("ROLE_ADMIN")) {
+				BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+				clients.setFullName(fullName);
+				clients.setEmail(email);
+				clients.setMobileNumber(mobileNumber);
+				clients.setRole("ROLE_EMPLOYEE");
+				clients.setPassword(bCryptPasswordEncoder.encode(password));
+				clients.setCreatedAt(LocalDateTime.now());
+				clients.setAdminId(adminId);
+				clients.setImage(image.getBytes());
+				clientsRepository.save(clients);
+			}
+
+			return clients;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public List<Clients> getEmployeesByAdminId(Long adminId) {
+		return clientsRepository.findByAdminIdAndRole(adminId, "ROLE_EMPLOYEE");
+	}
+
+	@Override
+
+	public Page<Clients> getEmployeesByAdminId(Long adminId, Pageable pageable) {
+		return clientsRepository.findByAdminId(adminId, pageable);
+	}
+
+	@Override
+	public void delete(Long id) {
+		clientsRepository.softDelete(id);
+	}
 }

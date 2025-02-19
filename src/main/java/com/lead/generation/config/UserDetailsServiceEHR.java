@@ -17,22 +17,25 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class UserDetailsServiceEHR implements UserDetailsService {
-    @Autowired
-    private final ClientsRepository clientsRepository;
+	@Autowired
+	private final ClientsRepository clientsRepository;
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+	@Override
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        String password = "";
-        String role = "";
-        List<Object[]> result = clientsRepository.findPasswordAndRoleByEmail(username);
-        for (Object[] row : result) {
-            password = (String) row[0];
-            role = (String) row[1];
+		String password = "";
+		String role = "";
+		List<Object[]> result = clientsRepository.findPasswordAndRoleByEmailAndIsActiveTrue(username);
+		if (result.isEmpty()) {
+			throw new UsernameNotFoundException("User not found or Your account is inactive");
+		}
+		for (Object[] row : result) {
+			password = (String) row[0];
+			role = (String) row[1];
 
-        }
-        List<GrantedAuthority> authorityList = List.of(new SimpleGrantedAuthority(role));
+		}
+		List<GrantedAuthority> authorityList = List.of(new SimpleGrantedAuthority(role));
 
-        return new User(username, password, authorityList);
-    }
+		return new User(username, password, authorityList);
+	}
 }

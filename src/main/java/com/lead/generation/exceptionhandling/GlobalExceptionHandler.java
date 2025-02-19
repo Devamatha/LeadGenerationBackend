@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
 		body.put("timestamp", LocalDateTime.now());
 		body.put("status", HttpStatus.METHOD_NOT_ALLOWED.value());
 		body.put("error", "Method Not Allowed");
-		body.put("message", "This HTTP method is not allowed for the requested URL");
+		body.put("message", ex.getMessage());
 		body.put("path", request.getRequestURI());
 
 		return new ResponseEntity<>(body, HttpStatus.METHOD_NOT_ALLOWED);

@@ -59,6 +59,8 @@ public class AddLeadController {
 	public List<AddLead> getLeadsByClientId(@PathVariable long client_id) {
 		return addLeadService.getLeadsByClientId(client_id);
 	}
+	
+	
 
 	@GetMapping("/date/{client_id}")
 	public List<AddLead> getLeadsByDateAndClientId(@PathVariable long client_id, @RequestParam LocalDate Date) {
@@ -89,5 +91,15 @@ public class AddLeadController {
 			@RequestParam(required = false) Integer month, @RequestParam(required = false) Integer year) {
 		return addLeadService.getLeadsCountPerDay(clientId, month, year);
 	}
+	
+	@GetMapping("/getleadById/{clientId}")
+    public ResponseEntity<Page<AddLead>> getLeadsByClientId(
+            @PathVariable Long clientId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<AddLead> leads = addLeadService.getLeadsByClientId(clientId, page, size);
+        return ResponseEntity.ok(leads);
+    }
 	
 }

@@ -11,6 +11,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.password.CompromisedPasswordChecker;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
@@ -33,6 +34,7 @@ import com.lead.generation.filter.RequestValidationBeforeFilter;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Configuration
+
 public class ProjectSecurityConfig {
 
 	private static final String[] AUTH_WHITE_LIST = { "/v3/api-docs/**", "/swagger-ui/**", "/v2/api-docs/**",
@@ -54,19 +56,26 @@ public class ProjectSecurityConfig {
 						config.setMaxAge(3600L);
 						return config;
 					}
-				}))
-			.csrf(csrf -> csrf.disable())
+				})).csrf(csrf -> csrf.disable())
 				.addFilterBefore(new RequestValidationBeforeFilter(), BasicAuthenticationFilter.class)
 				.addFilterAfter(new AuthoritiesLoggingAfterFilter(), BasicAuthenticationFilter.class)
 				.addFilterAt(new AuthoritiesLoggingAtFilter(), BasicAuthenticationFilter.class)
 				.addFilterAfter(new JWTTokenGeneratorFilter(), BasicAuthenticationFilter.class)
 				.addFilterBefore(new JWTTokenValidatorFilter(), BasicAuthenticationFilter.class)
-				.requiresChannel(rcc -> rcc.anyRequest().requiresInsecure()) 
+				.requiresChannel(rcc -> rcc.anyRequest().requiresInsecure())
 				.authorizeHttpRequests((requests) -> requests
-						.requestMatchers("/api/clients/changepassword/{Id}","/api/lead/getAll-leads","/api/lead/by-leadType/{client_id}",
-								"/api/lead/{client_id}","/api/lead/date/{client_id}","/api/lead/getById/{Id}","/api/lead/update/{id}").authenticated()
-						.requestMatchers("/api/lead/saveLead/**","/api/lead/count-per-day/{clientId}").hasRole("EMPLOYEE")
-						.requestMatchers( "/api/clients/login", "/api/clients/save","/actuator")
+						.requestMatchers("/api/clients/changepassword/{Id}", "/api/lead/getAll-leads",
+								"/api/lead/by-leadType/{client_id}", "/api/lead/{client_id}",
+								"/api/lead/date/{client_id}", "/api/lead/getById/{Id}", "/api/lead/update/{id}",
+								"/api/project/getAll")
+						.authenticated().requestMatchers("/api/lead/saveLead/**", "/api/lead/count-per-day/{clientId}")
+						.hasRole("EMPLOYEE").
+
+						requestMatchers("/api/clients/saveEmployee/{adminId}", "/api/clients/employees/{adminId}",
+								"/api/clients/update/{id}", "/api/project/save", "/api/project/update/{id}",
+								"/api/project/delete/{Id}", "/api/project/getById/{Id}", "/api/project/getAllprojects",
+								"/api/lead/getleadById/{clientId}","/api/clients/delete/{Id}","/api/clients/InActive-employees/{adminId}")
+						.hasRole("ADMIN").requestMatchers("/api/clients/login", "/api/clients/saveAdmin", "/actuator")
 						.permitAll().requestMatchers(AUTH_WHITE_LIST).permitAll()
 
 				);
